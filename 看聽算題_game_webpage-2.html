@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>看聽算題</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      background: linear-gradient(135deg, #f8fafc, #e0f2fe);
+      color: #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 44px;
+      margin: 0 0 8px;
+      letter-spacing: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      margin-bottom: 28px;
+      font-size: 16px;
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .status-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .label {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .question-area {
+      min-height: 260px;
+      border-radius: 24px;
+      border: 2px dashed #bae6fd;
+      background: #f0f9ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 28px;
+    }
+
+    .screen-question-label {
+      font-size: 18px;
+      color: #0369a1;
+      margin-bottom: 12px;
+    }
+
+    .screen-question {
+      font-size: clamp(72px, 14vw, 140px);
+      font-weight: 900;
+      line-height: 1;
+      color: #0284c7;
+    }
+
+    .hint {
+      margin-top: 16px;
+      color: #64748b;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.16);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .primary {
+      background: #0284c7;
+      color: white;
+    }
+
+    .secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .answer-btn {
+      background: #16a34a;
+      color: white;
+    }
+
+    .answer-section {
+      display: none;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      margin-top: 20px;
+    }
+
+    .answer-box {
+      padding: 26px;
+      background: white;
+    }
+
+    .answer-box + .answer-box {
+      border-top: 1px solid #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .answer-title {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .formula {
+      font-size: 22px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+
+    .final-answer {
+      margin-top: 12px;
+      font-size: 34px;
+      font-weight: 900;
+      color: #dc2626;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .setup label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .setup input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    @media (max-width: 720px) {
+      .status-bar,
+      .setup {
+        grid-template-columns: 1fr;
+      }
+
+      .app {
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>看聽算題</h1>
+    <div id="subtitle" class="subtitle">每 3 秒：聽一個兩位數，同時看一個兩位數與加減符號，共 6 題。</div>
+
+    <section class="setup">
+      <div>
+        <label for="questionCount">題數</label>
+        <input id="questionCount" type="number" min="1" max="20" value="6" />
+      </div>
+      <div>
+        <label for="intervalSeconds">每題秒數</label>
+        <input id="intervalSeconds" type="number" min="1" max="10" value="3" />
+      </div>
+      <div>
+        <label for="answerSeconds">答題秒數</label>
+        <input id="answerSeconds" type="number" min="10" max="300" value="60" />
+      </div>
+    </section>
+
+    <section class="status-bar">
+      <div class="status-card">
+        <div class="label">目前階段</div>
+        <div id="phase" class="value">待開始</div>
+      </div>
+      <div class="status-card">
+        <div class="label">目前題號</div>
+        <div id="progress" class="value">0 / 6</div>
+      </div>
+      <div class="status-card">
+        <div class="label">倒數時間</div>
+        <div id="timer" class="value">--</div>
+      </div>
+    </section>
+
+    <section class="question-area">
+      <div class="screen-question-label">螢幕題目</div>
+      <div id="screenQuestion" class="screen-question">準備</div>
+      <div id="hint" class="hint">按下「開始遊戲」後，系統會自動產生聽算與看算題目。</div>
+    </section>
+
+    <section class="controls">
+      <button id="startBtn" class="primary">開始遊戲</button>
+      <button id="resetBtn" class="secondary">重新開始</button>
+      <button id="showAnswerBtn" class="answer-btn" disabled>顯示答案</button>
+    </section>
+
+    <section id="answerSection" class="answer-section">
+      <div class="answer-box">
+        <div class="answer-title">上方：聽算答案</div>
+        <div id="listenFormula" class="formula"></div>
+        <div id="listenAnswer" class="final-answer"></div>
+      </div>
+      <div class="answer-box">
+        <div class="answer-title">下方：看算答案</div>
+        <div id="screenFormula" class="formula"></div>
+        <div id="screenAnswer" class="final-answer"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const showAnswerBtn = document.getElementById("showAnswerBtn");
+
+    const subtitleEl = document.getElementById("subtitle");
+    const phaseEl = document.getElementById("phase");
+    const progressEl = document.getElementById("progress");
+    const timerEl = document.getElementById("timer");
+    const screenQuestionEl = document.getElementById("screenQuestion");
+    const hintEl = document.getElementById("hint");
+
+    const questionCountInput = document.getElementById("questionCount");
+    const intervalSecondsInput = document.getElementById("intervalSeconds");
+    const answerSecondsInput = document.getElementById("answerSeconds");
+
+    const answerSection = document.getElementById("answerSection");
+    const listenFormulaEl = document.getElementById("listenFormula");
+    const listenAnswerEl = document.getElementById("listenAnswer");
+    const screenFormulaEl = document.getElementById("screenFormula");
+    const screenAnswerEl = document.getElementById("screenAnswer");
+
+    let listenQuestions = [];
+    let screenQuestions = [];
+    let currentIndex = 0;
+    let playInterval = null;
+    let answerTimer = null;
+    let answerTimeLeft = 60;
+
+    function updateGameDescription() {
+      const count = Number(questionCountInput.value) || 6;
+      const intervalSeconds = Number(intervalSecondsInput.value) || 3;
+      const answerSeconds = Number(answerSecondsInput.value) || 60;
+
+      subtitleEl.textContent = `每 ${intervalSeconds} 秒：聽一個兩位數，同時看一個兩位數與加減符號，共 ${count} 題。播報完畢後，答題時間倒數 ${answerSeconds} 秒。`;
+    }
+
+    function randomTwoDigit() {
+      return Math.floor(Math.random() * 90) + 10;
+    }
+
+    function randomOperator(index) {
+      if (index === 0) return "+";
+      return Math.random() > 0.5 ? "+" : "-";
+    }
+
+    function generateQuestions(count) {
+      listenQuestions = [];
+      screenQuestions = [];
+
+      for (let i = 0; i < count; i++) {
+        listenQuestions.push({
+          operator: randomOperator(i),
+          number: randomTwoDigit()
+        });
+
+        screenQuestions.push({
+          operator: randomOperator(i),
+          number: randomTwoDigit()
+        });
+      }
+    }
+
+    function speakQuestion(question) {
+      if (!("speechSynthesis" in window)) {
+        hintEl.textContent = "此瀏覽器不支援語音播報，但題目仍會正常進行。";
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const operatorText = question.operator === "+" ? "加" : "減";
+      const text = `${operatorText} ${question.number}`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-TW";
+      utterance.rate = 0.85;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function displayQuestion() {
+      if (currentIndex >= listenQuestions.length) {
+        finishQuestionPhase();
+        return;
+      }
+
+      const listenQ = listenQuestions[currentIndex];
+      const screenQ = screenQuestions[currentIndex];
+
+      phaseEl.textContent = "出題中";
+      progressEl.textContent = `${currentIndex + 1} / ${listenQuestions.length}`;
+      screenQuestionEl.textContent = `${screenQ.operator}${screenQ.number}`;
+      hintEl.textContent = "請同時記住聽到的數字，以及螢幕上看到的數字。";
+
+      speakQuestion(listenQ);
+      currentIndex++;
+    }
+
+    function finishQuestionPhase() {
+      clearInterval(playInterval);
+      playInterval = null;
+      window.speechSynthesis?.cancel();
+
+      phaseEl.textContent = "答題中";
+      screenQuestionEl.textContent = "作答";
+      hintEl.textContent = "請在倒數時間內寫下或輸入你的答案。時間到後才能顯示正確答案。";
+
+      startAnswerCountdown();
+    }
+
+    function startAnswerCountdown() {
+      answerTimeLeft = Number(answerSecondsInput.value) || 60;
+      timerEl.textContent = `${answerTimeLeft}s`;
+      showAnswerBtn.disabled = true;
+
+      answerTimer = setInterval(() => {
+        answerTimeLeft--;
+        timerEl.textContent = `${answerTimeLeft}s`;
+
+        if (answerTimeLeft <= 0) {
+          clearInterval(answerTimer);
+          answerTimer = null;
+          phaseEl.textContent = "可公布答案";
+          timerEl.textContent = "時間到";
+          showAnswerBtn.disabled = false;
+          hintEl.textContent = "時間到！請按下「顯示答案」查看上下兩組答案。";
+        }
+      }, 1000);
+    }
+
+    function calculateAnswer(questions) {
+      return questions.reduce((sum, q, index) => {
+        if (index === 0) return q.number;
+        return q.operator === "+" ? sum + q.number : sum - q.number;
+      }, 0);
+    }
+
+    function formatFormula(questions) {
+      return questions
+        .map((q, index) => {
+          if (index === 0) return `${q.number}`;
+          return `${q.operator} ${q.number}`;
+        })
+        .join(" ");
+    }
+
+    function showAnswers() {
+      const listenAnswer = calculateAnswer(listenQuestions);
+      const screenAnswer = calculateAnswer(screenQuestions);
+
+      listenFormulaEl.textContent = formatFormula(listenQuestions);
+      listenAnswerEl.textContent = `答案：${listenAnswer}`;
+
+      screenFormulaEl.textContent = formatFormula(screenQuestions);
+      screenAnswerEl.textContent = `答案：${screenAnswer}`;
+
+      answerSection.style.display = "block";
+      phaseEl.textContent = "答案公布";
+      screenQuestionEl.textContent = "完成";
+      hintEl.textContent = "上方為聽算答案，下方為看算答案。";
+    }
+
+    function startGame() {
+      resetGame(false);
+
+      const count = Math.max(1, Math.min(20, Number(questionCountInput.value) || 6));
+      const intervalMs = Math.max(1, Math.min(10, Number(intervalSecondsInput.value) || 3)) * 1000;
+
+      questionCountInput.value = count;
+      progressEl.textContent = `0 / ${count}`;
+
+      generateQuestions(count);
+      currentIndex = 0;
+      startBtn.disabled = true;
+      showAnswerBtn.disabled = true;
+
+      displayQuestion();
+      playInterval = setInterval(displayQuestion, intervalMs);
+    }
+
+    function resetGame(resetText = true) {
+      clearInterval(playInterval);
+      clearInterval(answerTimer);
+      playInterval = null;
+      answerTimer = null;
+      window.speechSynthesis?.cancel();
+
+      listenQuestions = [];
+      screenQuestions = [];
+      currentIndex = 0;
+
+      startBtn.disabled = false;
+      showAnswerBtn.disabled = true;
+      answerSection.style.display = "none";
+
+      if (resetText) {
+        const count = Number(questionCountInput.value) || 6;
+        phaseEl.textContent = "待開始";
+        progressEl.textContent = `0 / ${count}`;
+        timerEl.textContent = "--";
+        screenQuestionEl.textContent = "準備";
+        hintEl.textContent = "按下「開始遊戲」後，系統會自動產生聽算與看算題目。";
+      }
+    }
+
+    startBtn.addEventListener("click", startGame);
+    resetBtn.addEventListener("click", () => resetGame(true));
+    showAnswerBtn.addEventListener("click", showAnswers);
+
+    function handleSettingChange() {
+      updateGameDescription();
+
+      if (!playInterval && !answerTimer) {
+        progressEl.textContent = `0 / ${Number(questionCountInput.value) || 6}`;
+      }
+    }
+
+    questionCountInput.addEventListener("input", handleSettingChange);
+    intervalSecondsInput.addEventListener("input", handleSettingChange);
+    answerSecondsInput.addEventListener("input", handleSettingChange);
+
+    updateGameDescription();
+  </script>
+</body>
+</html>
